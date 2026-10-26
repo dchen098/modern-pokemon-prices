@@ -1,0 +1,58 @@
+name: Update prices and publish site
+
+on:
+  schedule:
+    - cron: '37 21 * * 1'   # Mondays, 21:37 UTC (afternoon in Chicago), after tcgcsv.com's daily refresh
+  workflow_dispatch:        # "Run workflow" button on the Actions tab
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download this week's prices
+        run: python3 scripts/update_prices.py
+      - name: Save the new prices
+        run: |
+          if git diff --quiet; then
+            echo "No price changes to save."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data
+            git commit -m "Weekly prices: $(python3 -c "import json;print(json.load(open('data/meta.json'))['prices_as_of'])")"
+            git push
+          fi
+
+  deploy:
+    needs: update
+    if: always() && (needs.update.result == 'success' || needs.update.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pokémon Set Price Explorer</title>
+<meta name="description" content="TCGplayer market prices and price history for every modern English Pokémon TCG set, ranked card by card.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Light theme first; dark values follow the viewer's system setting. */
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --fg: #17181c; --fg-muted: #5d6270; --line: #e2e4ea;
+  --ok: #1d7a46; --warn: #9a6100; --bad: #b42335; --series-1: #2f62d6;
+  --grid: #eef0f4; --axis: #c9ccd4; --ref: #9aa0ad; --muted-bar: #d9dde6;
+  --popover: #ffffff; --shadow: 0 6px 20px rgba(20, 24, 35, .12);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111317; --panel: #191c21; --fg: #eceef2; --fg-muted: #a0a6b2; --line: #2b2f37;
+    --ok: #5cc98a; --warn: #e3a64a; --bad: #f07383; --series-1: #7ea2ff;
+    --grid: #22262d; --axis: #3d424c; --ref: #6f7682; --muted-bar: #343a45;
+    --popover: #20242a; --shadow: 0 6px 20px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+:root {
+  --font-anthropic-sans: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-anthropic-serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --color-bg: var(--bg); --color-panel: var(--panel); --color-fg: var(--fg); --color-fg-muted: var(--fg-muted);
+  --color-border-line: var(--line); --color-ok: var(--ok); --color-warn: var(--warn); --color-bad: var(--bad);
+  --cds-chart-grid: var(--grid); --cds-chart-axis: var(--axis); --cds-chart-reference: var(--ref); --cds-chart-muted: var(--muted-bar);
+  --cds-surface-popover: var(--popover); --cds-border: var(--line); --cds-shadow-popover: var(--shadow); --cds-text-secondary: var(--fg-muted);
+  --cds-font-size-caption: .8125rem; --cds-font-size-body: .9375rem; --cds-font-size-heading: 1.0625rem; --cds-font-size-title: 1.875rem;
+  --cds-font-weight-medium: 600;
+  --cds-gap-xs: .25rem; --cds-gap-sm: .5rem; --cds-gap-md: 1rem; --cds-gap-lg: 1.5rem;
+  --cds-pad-xs: .3rem; --cds-pad-sm: .55rem; --cds-pad-md: .9rem; --cds-pad-lg: 1.25rem;
+  --cds-radius: 10px; --cds-dur-slow: .3s;
+}
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-anthropic-sans); font-size: 15px; line-height: 1.45; }
+.page { max-width: 1240px; margin: 0 auto; padding-block: 2rem 3rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.site-foot { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: var(--cds-font-size-caption); color: var(--fg-muted); display: flex; flex-direction: column; gap: .35rem; }
+.site-foot a, .px-sub a { color: inherit; }
+.dash-skeleton { color: transparent !important; background: var(--grid); border-radius: 4px; }
+.px-chart.dash-skeleton { min-height: 260px; }
+
+/* Layout: a set list that opens into a two-column set view — ranked card table left, sticky price chart right; stacks to one column when narrow. */
+.px { font-family: var(--font-anthropic-sans); color: var(--color-fg); display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
+.px b { font-weight: 500; }
+.px-head { display: flex; flex-direction: column; gap: var(--cds-gap-xs); }
+.px-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.px-sub { color: var(--color-fg-muted); font-size: var(--cds-font-size-body); margin: 0; max-width: 70ch; }
+.px-note { display: flex; gap: var(--cds-gap-sm); align-items: baseline; flex-wrap: wrap; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.px-pill { font-size: var(--cds-font-size-caption); letter-spacing: .04em; text-transform: uppercase; border: 1px solid var(--color-border-line); border-radius: 999px; padding: 1px var(--cds-pad-sm); color: var(--color-fg-muted); white-space: nowrap; }
+.px-chart-note { margin: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.px-links { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); }
+.px-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
+.px-card h2 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
+.px-card-note { margin: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.px-tools { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; }
+.px-chip { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-radius: 999px; border: 1px solid var(--color-border-line); background: transparent; color: var(--color-fg-muted); cursor: pointer; }
+.px-chip[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); border-color: var(--color-fg); }
+.px-chip:focus-visible, .px-btn:focus-visible, .px-th:focus-visible, .px-row:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.px-input, .px-select { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); color: var(--color-fg); min-width: 0; }
+.px-input { flex: 1 1 10rem; }
+.px-btn { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; color: var(--color-fg); cursor: pointer; }
+.px-scroll { overflow: auto; max-height: 34rem; margin-inline: calc(-1 * var(--cds-pad-sm)); }
+.px-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.px-table th { position: sticky; top: 0; background: var(--color-panel); text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); white-space: nowrap; z-index: 1; }
+.px-table td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); vertical-align: middle; }
+.px-table .num { text-align: right; }
+.px-th { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.px-th::after { content: ""; display: inline-block; width: 1em; }
+th[aria-sort="descending"] .px-th::after { content: " ↓"; }
+th[aria-sort="ascending"] .px-th::after { content: " ↑"; }
+.px-row { cursor: pointer; }
+.px-row:hover td { background: var(--cds-chart-grid); }
+.px-row[aria-selected="true"] td { background: var(--cds-chart-grid); }
+.px-row[aria-selected="true"] td:first-child { box-shadow: inset 3px 0 0 var(--color-fg); }
+.px-name { font-weight: 500; color: var(--color-fg); }
+.px-muted { color: var(--color-fg-muted); }
+.px-bar { position: relative; min-width: 6rem; }
+.px-bar span.fill { position: absolute; left: 0; top: 50%; height: 6px; transform: translateY(-50%); border-radius: 3px; background: var(--cds-chart-muted); }
+.px-bar span.val { position: relative; }
+.px-up { color: var(--color-ok); }
+.px-down { color: var(--color-bad); }
+.px-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--cds-gap-md); }
+.px-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md) var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-xs); min-width: 0; }
+.px-tile-label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.px-tile-val { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; }
+.px-tile-foot { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); overflow-wrap: anywhere; }
+.px-split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--cds-gap-md); align-items: start; }
+.px-sticky { position: sticky; top: var(--cds-pad-md); }
+@media (max-width: 860px) { .px-split { grid-template-columns: minmax(0, 1fr); } .px-sticky { position: static; } }
+@media (max-width: 560px) { .px-hide-narrow { display: none; } }
+.px-detail-name { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; overflow-wrap: anywhere; }
+.px-detail-price { display: flex; align-items: baseline; gap: var(--cds-gap-sm); flex-wrap: wrap; }
+.px-big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; }
+.px-chart { position: relative; min-height: 260px; }
+.px-chart svg { display: block; }
+.px-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.px-tip .d { color: var(--cds-text-secondary); }
+.px-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--cds-gap-sm); font-size: var(--cds-font-size-caption); }
+.px-stats div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.px-stats .k { color: var(--color-fg-muted); }
+.px-stats .v { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.px-link { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.px-back { align-self: flex-start; }
+[data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+[data-dash-source-state=empty] { color: transparent; }
+.px-fail { display: flex; align-items: center; justify-content: center; gap: var(--cds-gap-xs); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); min-height: 8rem; }
+.px-fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+</style>
+</head>
+<body>
+<main class="page">
+<div class="px" id="explorer">
+
+  <!-- ========== ALL SETS ========== -->
+  <section class="px-view" id="all-sets">
+    <div class="px-head">
+      <h1 class="px-title">Pokémon Set Price Explorer</h1>
+      <p class="px-sub">Every English set from the last four years, plus the whole Sword &amp; Shield era. Priciest card across all of them: <b class="px-top-name dash-skeleton" data-source="set_summary" data-field="top_card">—</b> from <span class="px-top-set dash-skeleton" data-source="set_summary" data-field="set_name">—</span>, <b class="px-top-price dash-skeleton" data-source="set_summary" data-field="top_price">—</b>.</p>
+      <p class="px-note"><span class="px-pill">TCGplayer market</span><span>Near Mint market prices from TCGplayer, via tcgcsv.com, as of <span class="asof">—</span>. Updated every Monday. A year of weekly history covers my collection and every card at $10 or more; every card is tracked weekly from Oct 25, 2026.</span></p>
+    </div>
+
+    <div class="px-card" id="sets-card" style="margin-top: var(--cds-gap-lg)">
+      <h2>Sets</h2>
+      <p class="px-card-note">Click a set to see its cards ranked by price. Set value is the sum of every card's price.</p>
+      <div class="px-tools">
+        <div class="px-series" role="group" aria-label="Series"></div>
+        <input class="px-input px-set-search" id="set-search" type="search" placeholder="Search sets" aria-label="Search sets">
+      </div>
+      <div class="px-scroll" style="max-height: none">
+        <table class="px-table px-sets" data-source="set_summary" data-row-key="set_id">
+          <thead><tr>
+            <th data-field="set_name" data-sort="set_name"><button class="px-th">Set</button></th>
+            <th class="px-hide-narrow" data-field="series" data-sort="series"><button class="px-th">Series</button></th>
+            <th data-field="release_date" data-sort="release_date"><button class="px-th">Released</button></th>
+            <th class="num px-hide-narrow" data-field="card_count" data-sort="card_count"><button class="px-th">Cards</button></th>
+            <th class="px-hide-narrow" data-field="top_card" data-sort="top_card"><button class="px-th">Top card</button></th>
+            <th class="num" data-field="top_price" data-sort="top_price"><button class="px-th">Top price</button></th>
+            <th class="num" data-field="set_value" data-sort="set_value"><button class="px-th">Set value</button></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ONE SET ========== -->
+  <section class="px-view" id="set-view" hidden>
+    <button class="px-btn px-back" id="back-to-sets">← All sets</button>
+    <div class="px-head" style="margin-top: var(--cds-gap-sm)">
+      <h1 class="px-title px-set-title" data-source="sets" data-field="set_name">—</h1>
+      <p class="px-sub"><span class="px-set-series" data-source="sets" data-field="series">—</span> · released <span class="px-set-date" data-source="sets" data-field="release_date">—</span></p>
+      <p class="px-note"><span class="px-pill">TCGplayer market</span><span>Near Mint market prices as of <span class="asof">—</span>, updated every Monday.</span></p>
+    </div>
+
+    <div class="px-tiles" style="margin-top: var(--cds-gap-md)">
+      <div class="px-tile"><span class="px-tile-label">Top card price</span><span class="px-tile-val px-t-top" data-source="set_summary" data-field="top_price">—</span><span class="px-tile-foot px-t-topname" data-source="set_summary" data-field="top_card">—</span></div>
+      <div class="px-tile"><span class="px-tile-label">Set value</span><span class="px-tile-val px-t-value" data-source="set_summary" data-field="set_value">—</span><span class="px-tile-foot">Sum of every card's price</span></div>
+      <div class="px-tile"><span class="px-tile-label">Cards in set</span><span class="px-tile-val px-t-count" data-source="set_summary" data-field="card_count">—</span><span class="px-tile-foot">Includes secret rares</span></div>
+      <div class="px-tile"><span class="px-tile-label">Cards at $20 or more</span><span class="px-tile-val px-t-hits" data-source="set_summary" data-field="cards_20_plus">—</span><span class="px-tile-foot">The chase cards</span></div>
+    </div>
+
+    <div class="px-split" style="margin-top: var(--cds-gap-md)">
+      <div class="px-card" id="cards-card">
+        <h2>Cards ranked by price</h2>
+        <p class="px-card-note">Click a card to chart its price. 1-yr change compares today with about a year ago; blank where history is shorter.</p>
+        <div class="px-tools">
+          <input class="px-input px-card-search" id="card-search" type="search" placeholder="Search cards" aria-label="Search cards">
+          <select class="px-select px-rarity" id="rarity-filter" aria-label="Rarity"></select>
+        </div>
+        <div class="px-scroll">
+          <table class="px-table px-cards" data-source="cards" data-row-key="card_id">
+            <thead><tr>
+              <th class="num">Rank</th>
+              <th class="px-hide-narrow" data-field="number" data-sort="number"><button class="px-th">#</button></th>
+              <th data-field="name" data-sort="name"><button class="px-th">Card</button></th>
+              <th class="px-hide-narrow" data-field="rarity" data-sort="rarity"><button class="px-th">Rarity</button></th>
+              <th class="num" data-field="price" data-sort="price"><button class="px-th">Price</button></th>
+              <th class="num px-th-change" data-source="change_sv1" data-field="change_pct" data-sort="change_pct"><button class="px-th">1-yr change</button></th>
+              <th>Art</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="px-card px-sticky" id="card-detail">
+        <h2 class="px-detail-name" data-source="cards" data-field="name">—</h2>
+        <p class="px-card-note"><span class="px-d-rarity" data-source="cards" data-field="rarity">—</span> · #<span class="px-d-number" data-source="cards" data-field="number">—</span></p>
+        <div class="px-detail-price">
+          <span class="px-big px-d-price" data-source="cards" data-field="price">—</span>
+          <span class="px-d-change" data-source="change_sv1" data-field="change_pct">—</span>
+        </div>
+        <div class="px-tools" role="group" aria-label="Chart range">
+          <button class="px-chip px-range" data-range="3m" aria-pressed="false">3 months</button>
+          <button class="px-chip px-range" data-range="1y" aria-pressed="true">1 year</button>
+          <button class="px-chip px-range" data-range="5y" aria-pressed="false">5 years</button>
+        </div>
+        <div class="px-chart" id="price-chart" data-source="hist_sv1"></div>
+        <p class="px-chart-note" id="chart-note"></p>
+        <div class="px-stats">
+          <div><span class="k">Earliest tracked</span><span class="v px-s-first" data-source="stats_sv1" data-field="first_price">—</span></div>
+          <div><span class="k">Peak</span><span class="v px-s-peak" data-source="stats_sv1" data-field="peak_price">—</span></div>
+          <div><span class="k">Low</span><span class="v px-s-low" data-source="stats_sv1" data-field="low_price">—</span></div>
+        </div>
+        <div class="px-links"><a class="px-link px-tcg" href="https://www.tcgplayer.com" target="_blank" rel="noopener">TCGplayer listings ↗</a><a class="px-link px-art" href="#" target="_blank" rel="noopener">View card art ↗</a></div>
+      </div>
+    </div>
+  </section>
+</div>
+<footer class="site-foot">
+  <span>Prices: TCGplayer market price for Near Mint copies, via <a href="https://tcgcsv.com" target="_blank" rel="noopener">tcgcsv.com</a>. Card lists: <a href="https://github.com/PokemonTCG/pokemon-tcg-data" target="_blank" rel="noopener">PokemonTCG/pokemon-tcg-data</a>.</span>
+  <span>Not affiliated with The Pokémon Company, Nintendo or TCGplayer.</span>
+</footer>
+</main>
+<script src="assets/d3.min.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
