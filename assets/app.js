@@ -1,7 +1,4 @@
 // Page logic: set list, ranked card table and price chart.
-// Set ids that have their own price-history file (hist_<id>); a fixed list of this dashboard's sets.
-const SET_IDS = ['me55',  'me55c',  'me5',  'me4',  'me3',  'me2pt5',  'me2',  'me1',  'zsv10pt5',  'rsv10pt5',  'sv10',  'sv9',  'sv8pt5',  'sv8',  'sv7',  'sv6pt5',  'sv6',  'sv5',  'sv4pt5',  'sv4',  'sv3pt5',  'sv3',  'sv2',  'sve',  'sv1',  'swsh12pt5',  'swsh12pt5gg',  'svp',  'swsh12',  'swsh12tg',  'swsh11',  'swsh11tg',  'pgo',  'swsh10',  'swsh10tg',  'swsh9',  'swsh9tg',  'swsh8',  'cel25',  'cel25c',  'swsh7',  'swsh6',  'swsh5',  'swsh45',  'swsh45sv',  'swsh4',  'swsh35',  'swsh3',  'swsh2',  'swsh1',  'swshp'];
-
 // ---------- computed values ----------
 dash.calc('set_summary', {
   inputs: ['sets', 'cards'],
@@ -29,7 +26,11 @@ dash.calc('set_summary', {
   },
 });
 
-for (const id of SET_IDS) {
+// Per-set calculations over that set's history file, registered when the set is first opened.
+const registeredSets = new Set();
+function ensureSetCalcs(id) {
+  if (registeredSets.has(id)) return;
+  registeredSets.add(id);
   dash.calc('change_' + id, {
     inputs: ['hist_' + id],
     title: '1-year change',
@@ -167,6 +168,7 @@ function drawSets(summary) {
 
 // ---------- one set view ----------
 function drawSet(setId, sets, summary, cards) {
+  ensureSetCalcs(setId);
   const set = sets.find((s) => s.set_id === setId);
   const sum = summary.find((s) => s.set_id === setId);
   if (!set || !sum) return;

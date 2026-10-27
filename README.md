@@ -1,6 +1,6 @@
 # Pokémon Set Price Explorer
 
-TCGplayer market prices for every modern English Pokémon TCG set: the last four years of releases plus the whole Sword & Shield era (51 sets, about 8,400 cards). Pick a set to see its cards ranked by price, then pick a card to chart its price history.
+TCGplayer market prices for every modern English Pokémon TCG set: the last four years of releases plus the whole Sword & Shield and Sun & Moon eras. Pick a set to see its cards ranked by price, then pick a card to chart its price history.
 
 ## Where the numbers come from
 
@@ -22,5 +22,6 @@ Every Monday afternoon, the "Update prices and publish site" job in the Actions 
 | `data/hist/<set>.csv` | Price history, one row per card per date |
 | `data/meta.json` | Date of the latest prices |
 | `scripts/update_prices.py` | The weekly price download |
+| `scripts/add_sets.py` | Adds a whole series of sets (run it from the Actions tab: "Add a series of sets") |
 
 Not affiliated with The Pokémon Company, Nintendo or TCGplayer.
